@@ -1,20 +1,17 @@
 from typing import Text
 import PySimpleGUI as sg
 import socket
-import sys
 from simplecrypt import encrypt, decrypt
-import random
 
 connection = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 
 layout = [  
     [sg.Text('Ip: '), sg.InputText(size=(71, 3)), sg.Submit('Подключится')],
-    [sg.Output(size=(88, 30))],
+    [sg.Output(size=(88, 23))],
     [sg.Text('Поле ввода: '), sg.InputText(size=(71, 3)),sg.Submit('Ввод')]
         ]
 
 def Protocol_privazki_k_bity_Alice():
-    print("Ваша роль : Alice")
     data = connection.recv(1024)
     data = data.decode()
     print(f'От Bob: {data}')
@@ -49,7 +46,6 @@ def Protocol_privazki_k_bity_Alice():
 
     print("Конец \n")
 def Protocol_privazki_k_bity_Bob():
-    print("Ваша роль : Bob")
     # Отправка данных
     print("1)Получатель R(BOB) наугад равномерно выбирает r<{0,1}^n, и отправляет r отправителю |",end=' ')
     print("Bob выбирает бит или последовательность битов")
@@ -79,6 +75,85 @@ def Protocol_privazki_k_bity_Bob():
 
     print("Конец \n")
 
+def Protocol_podbrasivaniy_monety_Alice():
+    print("1)Alice выбирает большое случайное целое число x") 
+    event,values = window.read()
+    x = int(values[1])
+    
+    y = x * 12345
+    print("Вычисляем y=f(x) и сообщаем число y Бобу| y=x*12345 | y = "+str(y))
+    y = str(y)
+    y = y.encode()
+    connection.sendall(y)
+
+    data = connection.recv(1024)
+    num = int(data.decode())
+
+    print("Alice сообщает Bob о том, что его предположение правильно или нет, и называет ему число x.")
+    
+    if x % 2 == 0:
+        print("Число Alice: "+str(x)+"  Оно четное")
+        if num == 1:
+            print("Боб угадал, он предположил что число четное")
+        elif num == 0:
+            print("Боб не угадал, он предположил что число нечетное")
+    elif x % 2 == 1:
+        print("Число Alice: "+str(x)+" Оно нечетное")
+        if num == 1:
+            print("Боб неугадал, он предположил что число четное")
+        elif num == 0:
+            print("Боб угадал, он предположил что число нечетное")
+
+    x=str(x)
+    x = x.encode()   
+    connection.sendall(x)
+
+    print("Конец")
+def Protocol_podbrasivaniy_monety_Bob():
+    print("Подождите пока Alice выбирает число (x) и высчитывает значение функции |y = x * 12345| ")
+
+    data = connection.recv(1024)
+    y = data.decode()
+    
+    print("Alice передала значение y=f(x), y = "+str(y))
+
+    print("Bob сообщает Alice свое предположение о числе x: четное оно или нечетное. ")
+    print("Введите свое предположение(1-Четное | 0-Нечетное)")
+    event,values = window.read()
+    num= values[1]
+    predpolozhenie = num.encode()
+    connection.sendall(predpolozhenie)
+
+    data_x = connection.recv(1024)
+    data_x = data_x.decode()
+    x = int(data_x)
+
+    num = int(num)
+    print("Alice передает свое число: "+str(x))
+    if x % 2 == 0:
+        print("Число Alice: "+str(x)+"  Оно четное")
+        if num == 1:
+            print("Боб угадал, он предположил что число четное")
+        elif num == 0:
+            print("Боб не угадал, он предположил что число нечетное")
+    elif x % 2 == 1:
+        print("Число Alice: "+str(x)+" Оно нечетное")
+        if num == 1:
+            print("Боб неугадал, он предположил что число четное")
+        elif num == 0:
+            print("Боб угадал, он предположил что число нечетное")
+
+    print("Alice назвала число и Bob проводит последнюю проверку")
+    print("Bob проверяет, что y=f(x)")
+
+    y1 = int(x)*12345
+
+    if y1 == int(y):
+        print("Все правильно, проверка пройдена")
+    else:
+        print("Проверка не пройдена, что то не так")
+
+    print("Конец")
 window = sg.Window('Settings', layout)
 
 while True:
@@ -101,8 +176,19 @@ while True:
         if protocol=='Привзяка к биту на основе симметричной криптографии':
             print("Выбрано: Протокол привязки к биту на основе симметричной криптографии")
             if roll == 'Alice':
+                print("Ваша роль: Bob")
                 Protocol_privazki_k_bity_Bob()
             elif roll == 'Bob':
+                print("Ваша роль: Alice")
                 Protocol_privazki_k_bity_Alice()
+
+        elif protocol=='Протокол подбрасывания монеты на основе однонаправленной функции':
+            print("Выбрано: Протокол подбрасывания монеты на основе однонаправленной функции")
+            if roll == 'Alice':
+                print("Ваша роль: Bob")
+                Protocol_podbrasivaniy_monety_Bob()
+            elif roll == 'Bob':
+                print("Ваша роль: Alice")
+                Protocol_podbrasivaniy_monety_Alice()
 
 window.close()
