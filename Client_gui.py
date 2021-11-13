@@ -2,6 +2,7 @@ from typing import Text
 import PySimpleGUI as sg
 import socket
 from simplecrypt import encrypt, decrypt
+import random
 
 connection = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 
@@ -10,6 +11,42 @@ layout = [
     [sg.Output(size=(88, 23))],
     [sg.Text('Поле ввода: '), sg.InputText(size=(71, 3)),sg.Submit('Ввод')]
         ]
+
+def open_close(name):
+    print(f'{name} создает пару открытый/закрытый ключ')
+    print("Введите простые числа p и q.")
+
+    print("Введите p")
+    event,values = window.read()
+    p = int(values[1])
+
+    print("Введите q")
+    event,values = window.read()
+    q = int(values[1])
+
+    n = p*q
+    m = (p-1)*(q-1)
+    print(f'Значение функции Эйлера для числа {n} = {m}')
+    print(f'Числа взаимно простые с {m}')
+    for b in range(2, m):
+        num1 = m
+        num2 = b
+        while(num1 != num2):
+            if(num1 < num2):
+                temp = num1
+                num1 = num2
+                num2 = temp
+            num1 -= num2
+        if(num1 == 1):
+            print(b, end=" ")
+    print()
+    print("Выберите число e из предложенных выше.\ne = ")
+    event,values = window.read()
+    e = int(values[1])
+    for d in range(1, n):
+        if((d*e)%m == 1):
+            break
+    return (n,e),(n,d)
 
 def Protocol_privazki_k_bity_Alice():
     data = connection.recv(1024)
@@ -154,6 +191,15 @@ def Protocol_podbrasivaniy_monety_Bob():
         print("Проверка не пройдена, что то не так")
 
     print("Конец")
+
+
+    print()
+
+def Virtual_poker_Alice():
+    print()
+def Virtual_poker_Bob():
+    print()
+
 window = sg.Window('Settings', layout)
 
 while True:
@@ -190,5 +236,14 @@ while True:
             elif roll == 'Bob':
                 print("Ваша роль: Alice")
                 Protocol_podbrasivaniy_monety_Alice()
+
+        elif protocol=='Виртуальный покер':
+            print("Выбрано: Виртуальный покер")
+            if roll == 'Alice':
+                print("Ваша роль: Bob")
+                Virtual_poker_Bob()
+            elif roll == 'Bob':
+                print("Ваша роль: Alice")
+                Virtual_poker_Alice()
 
 window.close()
