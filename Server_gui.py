@@ -3,6 +3,8 @@ from typing import Text
 import PySimpleGUI as sg
 from simplecrypt import encrypt, decrypt
 import socket
+import random
+import netifaces
 
 h_name = socket.gethostname()
 IP_addres = socket.gethostbyname(h_name)
@@ -11,7 +13,7 @@ sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 
 layout = [  
     [sg.Text('Выбор роли', size=(15, 1)), sg.InputCombo(('Alice', 'Bob'), size=(70, 3))],
-    [sg.Text('Выбор протокола', size=(15, 1)), sg.InputCombo(("Привзяка к биту на основе симметричной криптографии","Протокол подбрасывания монеты на основе однонаправленной функции"), size=(70, 3))],
+    [sg.Text('Выбор протокола', size=(15, 1)), sg.InputCombo(("Привзяка к биту на основе симметричной криптографии","Протокол подбрасывания монеты на основе однонаправленной функции","Экспоненциальный протокол подбрасывнания монеты","Виртуальный покер"), size=(70, 3))],
     [sg.Submit(), sg.Cancel()], 
     [sg.Output(size=(88, 20))],
     [sg.Text('Поле ввода: '), sg.InputText(size=(71, 3)),sg.Submit('Ввод')]
@@ -19,6 +21,53 @@ layout = [
 
 window = sg.Window('Settings', layout)
 
+def get_ip():
+    s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+    try:
+        # doesn't even have to be reachable
+        s.connect(('10.255.255.255', 1))
+        IP = s.getsockname()[0]
+    except:
+        IP = '127.0.0.1'
+    finally:
+        s.close()
+    return IP
+
+def open_close(name):
+    print(f'{name} создает пару открытый/закрытый ключ')
+    print("Введите простые числа p и q.")
+    print("Введите p")
+    event,values = window.read()
+    p = int(values[2])
+
+    print("Введите q")
+    event,values = window.read()
+    q = int(values[2])
+
+    n = p*q
+    m = (p-1)*(q-1)
+    print(f'Значение функции Эйлера для числа {n} = {m}')
+    print(f'Числа взаимно простые с {m}')
+    for b in range(2, m):
+        num1 = m
+        num2 = b
+        while(num1 != num2):
+            if(num1 < num2):
+                temp = num1
+                num1 = num2
+                num2 = temp
+            num1 -= num2
+        if(num1 == 1):
+            print(b, end=" ")
+    print()
+    print("Выберите число e из предложенных выше.\ne = ")
+    event,values = window.read()
+    e = int(values[2])
+    for d in range(1, n):
+        if((d*e)%m == 1):
+            break
+    return (n,e),(n,d)
+    
 def Protocol_privazki_k_bity_Alice():
     protocol = protokol.encode()
     roll = role.encode()
@@ -184,13 +233,40 @@ def Protocol_podbrasivaniy_monety_Bob():
         
     print("Конец")
 
+def Virtual_poker_Alice():
+    protocol = protokol.encode()
+    roll = role.encode()
+    connection.sendall(protocol)
+    connection.sendall(roll)
+
+    Alice_open, Alice_close = open_close("Алиса")
+    print(f'Открытый ключ Алисы: {Alice_open}')
+    print(f'Закрытый ключ Алисы: {Alice_close}')
+
+    print("Боб создает 52 сообщения, по одному для каждой карты колоды. Подождите")
+    data = connection.recv(1024)
+    TEMPtable = data.decode()
+    print(TEMPtable)   
+def Virtual_poker_Bob():
+    protocol = protokol.encode()
+    roll = role.encode()
+    connection.sendall(protocol)
+    connection.sendall(roll)
+    
+    Bob_open, Bob_close = open_close("Боб")
+    print(f'Открытый ключ Боба: {Bob_open}')
+    print(f'Закрытый ключ Боба: {Bob_close}')
+
 while True:
     event, values = window.read()
     if event in (None, 'Exit', 'Cancel'):
         break
 
     if event == 'Submit':
-        ip=IP_addres
+        netifaces.gateways()
+        iface = netifaces.gateways()['default'][netifaces.AF_INET][1]
+        ip = netifaces.ifaddresses(iface)[netifaces.AF_INET][0]['addr']
+
         role=values[0]
         protokol=values[1]
 
@@ -219,6 +295,12 @@ while True:
                         Protocol_podbrasivaniy_monety_Alice()   
                     elif role == 'Bob':
                         Protocol_podbrasivaniy_monety_Bob()
+
+            elif protokol =='Виртуальный покер':
+                    if role == 'Alice':
+                        Virtual_poker_Alice()   
+                    elif role == 'Bob':
+                        Virtual_poker_Bob()
 
         finally:
             connection.close()
