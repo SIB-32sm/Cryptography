@@ -12,42 +12,6 @@ layout = [
     [sg.Text('Поле ввода: '), sg.InputText(size=(71, 3)),sg.Submit('Ввод')]
         ]
 
-def open_close(name):
-    print(f'{name} создает пару открытый/закрытый ключ')
-    print("Введите простые числа p и q.")
-
-    print("Введите p")
-    event,values = window.read()
-    p = int(values[1])
-
-    print("Введите q")
-    event,values = window.read()
-    q = int(values[1])
-
-    n = p*q
-    m = (p-1)*(q-1)
-    print(f'Значение функции Эйлера для числа {n} = {m}')
-    print(f'Числа взаимно простые с {m}')
-    for b in range(2, m):
-        num1 = m
-        num2 = b
-        while(num1 != num2):
-            if(num1 < num2):
-                temp = num1
-                num1 = num2
-                num2 = temp
-            num1 -= num2
-        if(num1 == 1):
-            print(b, end=" ")
-    print()
-    print("Выберите число e из предложенных выше.\ne = ")
-    event,values = window.read()
-    e = int(values[1])
-    for d in range(1, n):
-        if((d*e)%m == 1):
-            break
-    return (n,e),(n,d)
-
 def Protocol_privazki_k_bity_Alice():
     data = connection.recv(1024)
     data = data.decode()
@@ -69,8 +33,7 @@ def Protocol_privazki_k_bity_Alice():
     print("Шифрование AES-256. Введите ключ: ")
     event, values = window.read()
     key = values[1]
-    print()
-
+   
     r_and_v_crypt= encrypt(key, r_v)
     print(f"Зашифрованное сообщение: {r_and_v_crypt}")
 
@@ -81,7 +44,7 @@ def Protocol_privazki_k_bity_Alice():
     key=key.encode()
     connection.sendall(key)
 
-    print("Конец \n")
+    print("Конец \n\n")
 def Protocol_privazki_k_bity_Bob():
     # Отправка данных
     print("1)Получатель R(BOB) наугад равномерно выбирает r<{0,1}^n, и отправляет r отправителю |",end=' ')
@@ -93,8 +56,6 @@ def Protocol_privazki_k_bity_Bob():
     message = text.encode()
     connection.sendall(message)
 
-    print()
-
     #Принимаем зашифрованное сообщение от Alice
     data = connection.recv(1024)
     print(f"Зашифрованное сообщение от Alice: {data}")
@@ -103,14 +64,13 @@ def Protocol_privazki_k_bity_Bob():
     key=key.decode()
     print(f"Alice передала ключ: {key}")
 
-    print()
     print("Bob расшифровывает сообщение, узнавая бит, и проверяет свою случайную строку, убеждаясь в правильности бита.")
     print("Рассшифровка сообщения...")
     print("Расшифрованная строка : ",end=' ')
     r_and_v_decrypt = decrypt(key,data)
     print(str(r_and_v_decrypt).replace("'","").replace("b",""))
 
-    print("Конец \n")
+    print("Конец \n\n")
 
 def Protocol_podbrasivaniy_monety_Alice():
     print("1)Alice выбирает большое случайное целое число x") 
@@ -145,7 +105,7 @@ def Protocol_podbrasivaniy_monety_Alice():
     x = x.encode()   
     connection.sendall(x)
 
-    print("Конец")
+    print("Конец \n\n")
 def Protocol_podbrasivaniy_monety_Bob():
     print("Подождите пока Alice выбирает число (x) и высчитывает значение функции |y = x * 12345| ")
 
@@ -190,15 +150,110 @@ def Protocol_podbrasivaniy_monety_Bob():
     else:
         print("Проверка не пройдена, что то не так")
 
-    print("Конец")
+    print("Конец \n\n")
 
 
     print()
 
-def Virtual_poker_Alice():
-    print()
-def Virtual_poker_Bob():
-    print()
+def Protocol_exponent_podbrasivaniy_monety_Alice():
+    print("Алиса выбирает число X")
+    event,values = window.read()
+    x = values[1]
+    x = int(x)
+
+    print("g = 5, p = 3 (Фиксированные значения)")
+    g=5
+    p=3
+    y=(g**x)%p
+
+    print("y=g^x(mod p) | y="+str(y))
+    print("Алиса отправляет число Бобу")
+
+    y = str(y)
+    y = y.encode()
+    connection.sendall(y)
+
+    print("Число передано, ждите ответа от Bob")
+
+    data = connection.recv(1024)
+    data = data.decode()
+
+    print("Bob выбрал свои значения")
+    print("Алиса выбирает случайный бит С (0 или 1) и отправляет его Бобу")
+    event,values = window.read()
+    c = values[1] 
+    c = c.encode()
+    connection.sendall(c)
+    c = c.decode()
+
+    print("Bob должен отправить свои значения b и k. Подождите...")
+    data_b = connection.recv(1024)
+    data_k = connection.recv(1024)
+    b = data_b.decode()
+    k = data_k.decode()
+
+    print("Бит Bob = " + str(b))
+    print("Бит Alice = " + str(c))
+    print("Алиса проверяет что y=g^x(mod p). Если да то результат протокола будет бит d = b xor c")
+
+    if int(y) == (g**x)%p:
+        if int(b)== 0 and int(c)== 0:
+            d=0
+            print("d = "+str(d))
+        elif int(b)== 1 and int(c)== 0:
+            d=1
+            print("d = "+str(d))
+        elif int(b)== 0 and int(c)== 1:
+            d=1
+            print("d = "+str(d))
+        elif int(b)== 1 and int(c)== 1:
+            d=0
+            print("d = "+str(d))
+    else:
+        print("Проверка не прошла")
+
+    print("Конец \n\n")
+def Protocol_exponent_podbrasivaniy_monety_Bob():
+    print("Alice выбирает число и высчитывает значение y=g^x(mod p), подождите...")
+
+    data = connection.recv(1024)
+    data = data.decode()
+    y = data
+    print("y = "+ str(y))
+    print("g = 5, p = 3 (Фиксированные значения)")
+    g=5
+    p=3
+
+    print("Боб выбирает случайный бит (0 или 1)")
+    event,values = window.read()
+    b = values[1]
+
+    print("Боб выбирает случайное число K")
+    event,values = window.read()
+    k = values[1]
+
+    r=((int(y)**int(b))*(g**int(k)))%p
+    print("r=y^b*g^k(mod p) | r="+ str(r))
+    
+    a = "1"
+    a = a.encode()
+    connection.sendall(a)
+
+    print("Alice выбирает бит(0 или 1), Подождите...")
+    data = connection.recv(1024)
+    data = data.decode()
+
+    print("Боб отправляет b и k Алисе")
+    b = str(b)
+    b = b.encode()
+    k = str(k)
+    k = k.encode()
+    connection.sendall(b)
+    connection.sendall(k)
+
+    print("Конец \n\n")
+
+
 
 window = sg.Window('Settings', layout)
 
@@ -213,37 +268,38 @@ while True:
         print('Подключено к {} порт {}'.format(*server_address))
         connection.connect(server_address)
 
-        print("Второй человек выбирает протокол и ваши роли в нем")
-        protocol = connection.recv(1024).decode()
-        roll = connection.recv(1024).decode()
-        
-        print("Протокол и роли выбраны \n")
-        
-        if protocol=='Привзяка к биту на основе симметричной криптографии':
-            print("Выбрано: Протокол привязки к биту на основе симметричной криптографии")
-            if roll == 'Alice':
-                print("Ваша роль: Bob")
-                Protocol_privazki_k_bity_Bob()
-            elif roll == 'Bob':
-                print("Ваша роль: Alice")
-                Protocol_privazki_k_bity_Alice()
+        while True:
+            print("Второй человек выбирает протокол и ваши роли в нем \n\n")
+            protocol = connection.recv(1024).decode()
+            roll = connection.recv(1024).decode()
+            
+            print("Протокол и роли выбраны \n")
+            
+            if protocol=='Привзяка к биту на основе симметричной криптографии':
+                print("Выбрано: Протокол привязки к биту на основе симметричной криптографии")
+                if roll == 'Alice':
+                    print("Ваша роль: Bob")
+                    Protocol_privazki_k_bity_Bob()
+                elif roll == 'Bob':
+                    print("Ваша роль: Alice")
+                    Protocol_privazki_k_bity_Alice()
 
-        elif protocol=='Протокол подбрасывания монеты на основе однонаправленной функции':
-            print("Выбрано: Протокол подбрасывания монеты на основе однонаправленной функции")
-            if roll == 'Alice':
-                print("Ваша роль: Bob")
-                Protocol_podbrasivaniy_monety_Bob()
-            elif roll == 'Bob':
-                print("Ваша роль: Alice")
-                Protocol_podbrasivaniy_monety_Alice()
+            elif protocol=='Протокол подбрасывания монеты на основе однонаправленной функции':
+                print("Выбрано: Протокол подбрасывания монеты на основе однонаправленной функции")
+                if roll == 'Alice':
+                    print("Ваша роль: Bob")
+                    Protocol_podbrasivaniy_monety_Bob()
+                elif roll == 'Bob':
+                    print("Ваша роль: Alice")
+                    Protocol_podbrasivaniy_monety_Alice()
 
-        elif protocol=='Виртуальный покер':
-            print("Выбрано: Виртуальный покер")
-            if roll == 'Alice':
-                print("Ваша роль: Bob")
-                Virtual_poker_Bob()
-            elif roll == 'Bob':
-                print("Ваша роль: Alice")
-                Virtual_poker_Alice()
+            elif protocol=='Экспоненциальный протокол подбрасывнания монеты':
+                print("Выбрано: Экспоненциальный протокол подбрасывнания монеты")
+                if roll == 'Alice':
+                    print("Ваша роль: Bob")
+                    Protocol_exponent_podbrasivaniy_monety_Bob()
+                elif roll == 'Bob':
+                    print("Ваша роль: Alice")
+                    Protocol_exponent_podbrasivaniy_monety_Alice()
 
 window.close()
