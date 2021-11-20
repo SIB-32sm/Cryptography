@@ -4,6 +4,6 @@
 2)Протокол подбрасывания монеты на основе однонаправленной функции  http://www.cryptoprotocols.kz/index.php?view=examples&id=3  
 3)Экспоненциальный протокол подбрасывнания монеты  http://www.cryptoprotocols.kz/index.php?view=examples&id=4 
 Авторы :  
-Зейнулин Алмас SIB-32-2021 alzey
-Елеусизов Акылжан SIB-32-2021 acool
-Ерхвн Дамир SIB-32-2021 derhan
+Зейнулин Алмас SIB-32-2021 alzey  
+Елеусизов Акылжан SIB-32-2021 acool  
+Ерхвн Дамир SIB-32-2021 derhan  
